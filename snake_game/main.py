@@ -29,7 +29,7 @@ class Main:
 
         self.color1_botton = Button(self, "Orange", [150, 300])
         self.color2_botton = Button(self, "Blue", [300, 300])
-        self.color3_botton = Button(self, "Green", [450, 300])
+        self.color3_botton = Button(self, "Purple", [450, 300])
 
         self.easy_button = Button(self, "Easy", [150, 250])
         self.normal_button = Button(self, "Normal", [300, 250])
@@ -38,6 +38,25 @@ class Main:
         self.small_button = Button(self, "Small", [150, 200])
         self.medium_button = Button(self, "Medium", [300, 200])
         self.large_button = Button(self, "Large", [450, 200])
+
+        
+        self.menu_button_actions = [
+            (self.return_button,    lambda: self.set_state('STOPPED')),
+
+            (self.easy_button,    lambda: self.settings.set_difficulty('EASY')),
+            (self.normal_button,  lambda: self.settings.set_difficulty('NORMAL')),
+            (self.hard_button,    lambda: self.settings.set_difficulty('HARD')),
+
+            (self.color1_botton,  lambda: self.set_background_color(self.settings.color1)),
+            (self.color2_botton,  lambda: self.set_background_color(self.settings.color2)),
+            (self.color3_botton,  lambda: self.set_background_color(self.settings.color3))   
+        ]
+
+        self.stopped_button_actions = [
+            (self.play_button,    lambda: self.set_state('RUNNING')),
+            (self.menu_button,    lambda: self.set_state('MENU')),
+
+        ]
 
         self.background_color = self.settings.background_color
 
@@ -84,26 +103,13 @@ class Main:
                 if self.state == 'STOPPED':
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         mouse_position = pygame.mouse.get_pos()
-                        self._check_play_button(mouse_position)
-                        self._check_menu_button(mouse_position)
+                        self._check_buttons(self.stopped_button_actions, mouse_position)
 
             if self.clicked_button == False:
                 if self.state == 'MENU':
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         mouse_position = pygame.mouse.get_pos()
-                        self._check_return_button(mouse_position)
-                        
-                        self._check_color1_button(mouse_position)
-                        self._check_color2_button(mouse_position)
-                        self._check_color3_button(mouse_position)
-
-                        self._check_easy_button(mouse_position)
-                        self._check_normal_button(mouse_position)
-                        self._check_hard_button(mouse_position)
-
-                        self._check_small_button(mouse_position)
-                        self._check_medium_button(mouse_position)
-                        self._check_large_button(mouse_position)
+                        self._check_buttons(self.menu_button_actions, mouse_position)
 
             if event.type == pygame.MOUSEBUTTONUP and self.clicked_button == True:
                 self.clicked_button = False
@@ -187,87 +193,25 @@ class Main:
         if self.snake.head in headless_body:
             self.game_over() 
 
+
     def game_over(self):
         self.snake.reset()
         self.food.position = self.food.generate_random_position(self.snake.body)
         self.state = 'STOPPED'
         self.score = 0
 
-    def _check_play_button(self, mouse_position):
-        button_clicked = self.play_button.rect.collidepoint(mouse_position)
-        if button_clicked:
-            self.state = 'RUNNING'
-            self.clicked_button = True
+    def set_state(self, state):
+        self.state = state
 
-    def _check_menu_button(self, mouse_position):
-        button_clicked = self.menu_button.rect.collidepoint(mouse_position)
-        if button_clicked:
-            self.state = 'MENU'
-            self.clicked_button = True
+    def set_background_color(self, color):
+        self.background_color = color
 
-    def _check_return_button(self, mouse_position):
-        button_clicked = self.return_button.rect.collidepoint(mouse_position)
-        if button_clicked:
-            
-            self.snake = Snake(self)
-            self.food = Food(self)
-
-            self.state = 'STOPPED'
-            self.clicked_button = True
-    
-    def _check_color1_button(self, mouse_position):
-        button_clicked = self.color1_botton.rect.collidepoint(mouse_position)
-        if button_clicked:
-            self.background_color = self.settings.color1
-            self.clicked_button = True
-        
-    def _check_color2_button(self, mouse_position):
-        button_clicked = self.color2_botton.rect.collidepoint(mouse_position)
-        if button_clicked:
-            self.background_color = self.settings.color2
-            self.clicked_button = True
-
-    def _check_color3_button(self, mouse_position):
-        button_clicked = self.color3_botton.rect.collidepoint(mouse_position)
-        if button_clicked:
-            self.background_color = self.settings.color3
-            self.clicked_button = True
-
-    def _check_easy_button(self, mouse_position):
-        button_clicked = self.easy_button.rect.collidepoint(mouse_position)
-        if button_clicked:
-            self.settings.set_difficulty('EASY')
-            self.clicked_button = True
-    
-    def _check_normal_button(self, mouse_position):
-        button_clicked = self.normal_button.rect.collidepoint(mouse_position)
-        if button_clicked:
-            self.settings.set_difficulty('NORMAL')
-            self.clicked_button = True
-
-    def _check_hard_button(self, mouse_position):
-        button_clicked = self.hard_button.rect.collidepoint(mouse_position)
-        if button_clicked:
-            self.settings.set_difficulty('HARD')
-            self.clicked_button = True
-
-    def _check_small_button(self, mouse_position):
-        button_clicked = self.small_button.rect.collidepoint(mouse_position)
-        if button_clicked:
-            self.settings.set_game_size('SMALL')
-            self.clicked_button = True
-
-    def _check_medium_button(self, mouse_position):
-        button_clicked = self.medium_button.rect.collidepoint(mouse_position)
-        if button_clicked:
-            self.settings.set_game_size('MEDIUM')
-            self.clicked_button = True
-    
-    def _check_large_button(self, mouse_position):
-        button_clicked = self.large_button.rect.collidepoint(mouse_position)
-        if button_clicked:
-            self.settings.set_game_size('LARGE')
-            self.clicked_button = True
+    def _check_buttons(self, button_actions, mouse_position):
+        for button, action in button_actions:
+            if button.rect.collidepoint(mouse_position):
+                action()
+                self.clicked_button = True
+                break
 
 if __name__ == '__main__':
     main = Main()
