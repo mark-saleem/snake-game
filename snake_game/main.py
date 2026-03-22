@@ -4,6 +4,8 @@ from settings import Settings
 from food import Food
 from snake import Snake
 from button import Button
+from text_input import TextInput
+from user import User
 
 class Main:
 
@@ -14,17 +16,16 @@ class Main:
 
         self.settings = Settings()
 
+        self.user = User()
+
         pygame.display.set_caption("Snake Game")
 
         self.screen = pygame.display.set_mode((self.settings.screen_width, self.settings.screen_height))
-
-        self.snake = Snake(self)
-        self.occupied_positions = self.snake.body
-    
-        self.food = Food(self)
         
         self.play_button = Button(self, "Play", [300, 300])
         self.menu_button = Button(self, "Menu", [300, 400])
+
+
         self.return_button = Button(self, "Return", [300, 400])
 
         self.color1_botton = Button(self, "Orange", [150, 300])
@@ -39,7 +40,18 @@ class Main:
         self.medium_button = Button(self, "Medium", [300, 200])
         self.large_button = Button(self, "Large", [450, 200])
 
+        self.controls_button = Button(self, "Controls", [300, 350])
+
+
+        self.login_username_input = TextInput(self, position=(300, 100), label='Username:',allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890') #########################
+        self.login_password_input = TextInput(self, position=(300, 150), label='Password:', hidden=True, allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()-_=+/?.>,<[]') #########################
+        self.login_button = Button(self, "Login", position=(300, 200))
+
+        self.signup_username_input = TextInput(self, position=(300, 300), label='Username:',allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890') #########################
+        self.signup_password_input = TextInput(self, position=(300, 350), label='Password:', hidden=True, allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()-_=+/?.>,<[]') #########################
+        self.signup_button = Button(self, "Sign up", position=(300, 400))
         
+
         self.menu_button_actions = [
             (self.return_button,    lambda: self.set_state('STOPPED')),
 
@@ -47,22 +59,39 @@ class Main:
             (self.normal_button,  lambda: self.settings.set_difficulty('NORMAL')),
             (self.hard_button,    lambda: self.settings.set_difficulty('HARD')),
 
-            (self.color1_botton,  lambda: self.set_background_color(self.settings.color1)),
-            (self.color2_botton,  lambda: self.set_background_color(self.settings.color2)),
-            (self.color3_botton,  lambda: self.set_background_color(self.settings.color3))   
+            (self.color1_botton,  lambda: self.settings.set_background_color(self.settings.color1)),
+            (self.color2_botton,  lambda: self.settings.set_background_color(self.settings.color2)),
+            (self.color3_botton,  lambda: self.settings.set_background_color(self.settings.color3)),
+
+            (self.small_button,    lambda: self.settings.set_game_size('SMALL')),
+            (self.medium_button,    lambda: self.settings.set_game_size('MEDIUM')),
+            (self.large_button,    lambda: self.settings.set_game_size('LARGE')),
+
+            (self.controls_button, lambda: self.settings.set_controls())
         ]
 
         self.stopped_button_actions = [
-            (self.play_button,    lambda: self.set_state('RUNNING')),
-            (self.menu_button,    lambda: self.set_state('MENU')),
-
+            (self.play_button,    lambda: self.start_round()),
+            (self.menu_button,    lambda: self.set_state('MENU'))
         ]
 
-        self.background_color = self.settings.background_color
+        self.loggingin_button_actions = [
+            (self.login_button,    lambda: self.user.login(self.login_username_input.get_text(), self.login_password_input.get_text())),
+            (self.signup_button,    lambda: self.user.signup(self.signup_username_input.get_text(), self.signup_password_input.get_text())),
+        ]
 
-        self.state = 'STOPPED'
+        self.loggingin_input_fields = [
+            self.login_username_input, 
+            self.login_password_input, 
+            self.signup_username_input, 
+            self.signup_password_input
+        ]
+
+        self.state = 'LOGGINGIN'
         self.score = 0
         self.highscore = 0
+
+        self.id = 0
 
         self.clicked_button = False
         self.moved = False
@@ -74,6 +103,7 @@ class Main:
         self.title_font = self.settings.h1
         self.score_font = self.settings.h2
         self.highscore_font = self.settings.h2
+        self.game_settings_font = self.settings.h3
 
     def run_game(self):
         while True:
@@ -91,14 +121,25 @@ class Main:
     def _check_events(self):
         for event in pygame.event.get():
             if event.type ==  pygame.QUIT:
+                self.user.update_highscore(self.id, self.highscore)
                 pygame.quit()
                 sys.exit()
         
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_q:
+                    self.user.update_highscore(self.id, self.highscore)
                     pygame.quit()
                     sys.exit()
-            
+
+            if self.clicked_button == False:
+                if self.state == 'LOGGINGIN':
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        mouse_position = pygame.mouse.get_pos()
+                        self._check_auth_buttons(self.loggingin_button_actions, mouse_position)
+
+                    for input_field in self.loggingin_input_fields:
+                        input_field.handle_event(event)
+
             if self.clicked_button == False:
                 if self.state == 'STOPPED':
                     if event.type == pygame.MOUSEBUTTONDOWN:
@@ -116,24 +157,45 @@ class Main:
             
             if self.state == 'RUNNING':
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_UP or event.key == pygame.K_LEFT or event.key == pygame.K_DOWN or event.key == pygame.K_RIGHT:
+                    if event.key == self.settings.binds[0] or event.key == self.settings.binds[1] or event.key == self.settings.binds[2] or event.key == self.settings.binds[3]:
                         if self.moved == False:
-                            if event.key == pygame.K_UP and self.snake.direction != [0, 1]:
+                            if event.key == self.settings.binds[0] and self.snake.direction != [0, 1]:
                                 self.snake.direction = [0, -1]
-                            if event.key == pygame.K_DOWN and self.snake.direction != [0, -1]:
+                            if event.key == self.settings.binds[2] and self.snake.direction != [0, -1]:
                                 self.snake.direction = [0, 1]
-                            if event.key == pygame.K_LEFT and self.snake.direction != [1, 0]:
+                            if event.key == self.settings.binds[1] and self.snake.direction != [1, 0]:
                                 self.snake.direction = [-1, 0]
-                            if event.key == pygame.K_RIGHT and self.snake.direction != [-1, 0]:
+                            if event.key == self.settings.binds[3] and self.snake.direction != [-1, 0]:
                                 self.snake.direction = [1, 0]
                             
                             self.moved = True
 
     def draw(self):
-        self.screen.fill(self.background_color)
+        self.screen.fill(self.settings.background_color)
         pygame.draw.rect(self.screen, self.settings.border_color, (self.settings.offset-5, self.settings.offset-5, self.settings.cell_size*self.settings.number_of_cells + 10, self.settings.cell_size*self.settings.number_of_cells + 10), 5)
         
+        if self.state == 'LOGGINGIN':
+
+            self.login_username_input.draw() 
+            self.login_password_input.draw() 
+            self.login_button.draw()
+
+            self.signup_username_input.draw() 
+            self.signup_password_input.draw() 
+            self.signup_button.draw()
+
         if self.state == 'MENU':
+
+            self.difficulty_surface = self.game_settings_font.render(f"Difficulty: {self.settings.difficulty}" , True, self.title_color)
+            self.size_surface = self.game_settings_font.render(f"Game Size: {self.settings.size}", True, self.title_color)
+            self.color_surface = self.game_settings_font.render(f"Background Color: {self.settings.background_color_name}", True, self.title_color)
+            self.controls_surface = self.game_settings_font.render(f"Controls: {self.settings.controls}", True, self.title_color)
+
+            self.screen.blit(self.difficulty_surface, (self.settings.offset + 10, self.settings.offset + 10))
+            self.screen.blit(self.size_surface, (self.settings.offset + 10, self.settings.offset + 10 + (self.game_settings_font.get_height())*1.2))
+            self.screen.blit(self.color_surface, (self.settings.offset + 10, self.settings.offset + 10 + (self.game_settings_font.get_height())*2.4))
+            self.screen.blit(self.controls_surface, (self.settings.offset + 10, self.settings.offset + 10 + (self.game_settings_font.get_height())*3.6))
+            
             self.return_button.draw()
             
             self.color1_botton.draw()
@@ -147,8 +209,10 @@ class Main:
             self.small_button.draw()
             self.medium_button.draw()
             self.large_button.draw()
+
+            self.controls_button.draw()
         
-        else:
+        elif self.state == 'RUNNING':
             self.title_surface = self.title_font.render("Snake Game", True, self.title_color)
             self.score_surface = self.score_font.render(f"Score: {self.score}", True, self.score_color)
             self.highscore_surface = self.highscore_font.render(f"Highscore: {self.highscore}", True, self.highscore_color)
@@ -160,9 +224,17 @@ class Main:
             self.snake.draw()
             self.food.draw()
 
-            if self.state == 'STOPPED':
-                self.play_button.draw()
-                self.menu_button.draw()
+        elif self.state == 'STOPPED':
+            self.title_surface = self.title_font.render("Snake Game", True, self.title_color)
+            self.score_surface = self.score_font.render(f"Score: {self.score}", True, self.score_color)
+            self.highscore_surface = self.highscore_font.render(f"Highscore: {self.highscore}", True, self.highscore_color)
+
+            self.screen.blit(self.title_surface, (self.settings.offset, 10))
+            self.screen.blit(self.score_surface, (self.settings.offset, self.settings.offset + self.settings.cell_size*self.settings.number_of_cells + 10))
+            self.screen.blit(self.highscore_surface, (self.settings.offset + int((self.settings.cell_size*self.settings.number_of_cells)/2), self.settings.offset + self.settings.cell_size*self.settings.number_of_cells + 10))
+            
+            self.play_button.draw()
+            self.menu_button.draw()
 
         pygame.display.update()
 
@@ -193,7 +265,6 @@ class Main:
         if self.snake.head in headless_body:
             self.game_over() 
 
-
     def game_over(self):
         self.snake.reset()
         self.food.position = self.food.generate_random_position(self.snake.body)
@@ -203,15 +274,31 @@ class Main:
     def set_state(self, state):
         self.state = state
 
-    def set_background_color(self, color):
-        self.background_color = color
-
     def _check_buttons(self, button_actions, mouse_position):
         for button, action in button_actions:
             if button.rect.collidepoint(mouse_position):
                 action()
                 self.clicked_button = True
                 break
+
+    def _check_auth_buttons(self, button_actions, mouse_position):
+        for button, action in button_actions:
+            if button.rect.collidepoint(mouse_position):
+                userinfo = action()
+                self.clicked_button = True
+                if userinfo:
+                    self.id = userinfo[0]
+                    self.highscore = userinfo[3]
+                    self.state = 'STOPPED'
+                    return
+                
+    def start_round(self):
+        self.set_state('RUNNING')
+        
+        self.snake = Snake(self)
+        self.occupied_positions = self.snake.body
+
+        self.food = Food(self)
 
 if __name__ == '__main__':
     main = Main()

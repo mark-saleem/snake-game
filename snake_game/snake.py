@@ -9,7 +9,7 @@ class Snake:
 
         self.start_height = int(self.settings.number_of_cells/2)
 
-        self.body = [[6, 9], [5, 9], [4, 9]]
+        self.body = [[4, self.start_height], [3, self.start_height], [2, self.start_height]]
         self.head = self.body[0]
         self.direction = [1, 0]
         self.add_segment = False
@@ -28,7 +28,7 @@ class Snake:
             self.body = self.body[:-1]
     
     def reset(self):
-        self.body = [[6, 9], [5, 9], [4, 9]]
+        self.body = [[4, self.start_height], [3, self.start_height], [2, self.start_height]]
         self.direction = [1, 0]
 
 def add_2Dlists(list1, list2):
