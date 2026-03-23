@@ -40,7 +40,7 @@ class Settings:
         self.difficulty = 'NORMAL'
         self.size = 'MEDIUM'
 
-        self.button_color = (180, 180, 180)
+        self.button_color = (200, 200, 200)
 
         self.controls = 'WASD'
         self.binds = [pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d]

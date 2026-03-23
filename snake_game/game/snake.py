@@ -17,7 +17,8 @@ class Snake:
     def draw(self):
         for segment in self.body:
             segment_rect = (self.settings.offset+ segment[0] * self.settings.cell_size, self.settings.offset + segment[1] * self.settings.cell_size, self.settings.cell_size, self.settings.cell_size)
-            pygame.draw.rect(self.screen, self.color, segment_rect, 0, 7)
+            pygame.draw.rect(self.screen, self.color, segment_rect, 0, self.settings.cell_size * 3 // 8)
+
 
     def update(self):
         self.head = add_2Dlists(self.body[0], self.direction)

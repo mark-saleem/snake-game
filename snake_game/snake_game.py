@@ -1,13 +1,13 @@
-import pygame, sys, random
+import pygame, sys
 
-from settings import Settings
-from food import Food
-from snake import Snake
-from button import Button
-from text_input import TextInput
-from user import User
+from snake_game.settings import Settings
+from snake_game.game.food import Food
+from snake_game.game.snake import Snake
+from snake_game.user_interface.button import Button
+from snake_game.user_interface.text_input import TextInput
+from snake_game.user_database.user import User
 
-class Main:
+class SnakeGame:
 
     def __init__(self):
 
@@ -28,9 +28,9 @@ class Main:
 
         self.return_button = Button(self, "Return", [300, 400])
 
-        self.color1_botton = Button(self, "Orange", [150, 300])
-        self.color2_botton = Button(self, "Blue", [300, 300])
-        self.color3_botton = Button(self, "Purple", [450, 300])
+        self.color1_button = Button(self, "Orange", [150, 300])
+        self.color2_button = Button(self, "Blue", [300, 300])
+        self.color3_button = Button(self, "Purple", [450, 300])
 
         self.easy_button = Button(self, "Easy", [150, 250])
         self.normal_button = Button(self, "Normal", [300, 250])
@@ -41,7 +41,6 @@ class Main:
         self.large_button = Button(self, "Large", [450, 200])
 
         self.controls_button = Button(self, "Controls", [300, 350])
-
 
         self.login_username_input = TextInput(self, position=(300, 100), label='Username:',allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890') #########################
         self.login_password_input = TextInput(self, position=(300, 150), label='Password:', hidden=True, allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()-_=+/?.>,<[]') #########################
@@ -59,9 +58,9 @@ class Main:
             (self.normal_button,  lambda: self.settings.set_difficulty('NORMAL')),
             (self.hard_button,    lambda: self.settings.set_difficulty('HARD')),
 
-            (self.color1_botton,  lambda: self.settings.set_background_color(self.settings.color1)),
-            (self.color2_botton,  lambda: self.settings.set_background_color(self.settings.color2)),
-            (self.color3_botton,  lambda: self.settings.set_background_color(self.settings.color3)),
+            (self.color1_button,  lambda: self.settings.set_background_color(self.settings.color1_name)),
+            (self.color2_button,  lambda: self.settings.set_background_color(self.settings.color2_name)),
+            (self.color3_button,  lambda: self.settings.set_background_color(self.settings.color3_name)),
 
             (self.small_button,    lambda: self.settings.set_game_size('SMALL')),
             (self.medium_button,    lambda: self.settings.set_game_size('MEDIUM')),
@@ -135,7 +134,12 @@ class Main:
                 if self.state == 'LOGGINGIN':
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         mouse_position = pygame.mouse.get_pos()
-                        self._check_auth_buttons(self.loggingin_button_actions, mouse_position)
+                        self.userinfo = self._check_buttons(self.loggingin_button_actions, mouse_position)
+                        if self.userinfo:
+                            self.id = self.userinfo[0]
+                            self.highscore = self.userinfo[3]
+                            self.state = 'STOPPED'
+                            
 
                     for input_field in self.loggingin_input_fields:
                         input_field.handle_event(event)
@@ -198,9 +202,9 @@ class Main:
             
             self.return_button.draw()
             
-            self.color1_botton.draw()
-            self.color2_botton.draw()
-            self.color3_botton.draw()
+            self.color1_button.draw()
+            self.color2_button.draw()
+            self.color3_button.draw()
 
             self.easy_button.draw()
             self.normal_button.draw()
@@ -277,20 +281,10 @@ class Main:
     def _check_buttons(self, button_actions, mouse_position):
         for button, action in button_actions:
             if button.rect.collidepoint(mouse_position):
-                action()
+                output = action()
                 self.clicked_button = True
-                break
+                return output
 
-    def _check_auth_buttons(self, button_actions, mouse_position):
-        for button, action in button_actions:
-            if button.rect.collidepoint(mouse_position):
-                userinfo = action()
-                self.clicked_button = True
-                if userinfo:
-                    self.id = userinfo[0]
-                    self.highscore = userinfo[3]
-                    self.state = 'STOPPED'
-                    return
                 
     def start_round(self):
         self.set_state('RUNNING')
@@ -300,6 +294,4 @@ class Main:
 
         self.food = Food(self)
 
-if __name__ == '__main__':
-    main = Main()
-    main.run_game()
+        

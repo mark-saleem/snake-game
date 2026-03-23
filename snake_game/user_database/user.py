@@ -1,4 +1,4 @@
-from user_database import UserDatabase
+from snake_game.user_database.user_database import UserDatabase
 
 class User:
     def __init__(self):
