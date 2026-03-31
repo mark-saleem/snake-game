@@ -7,8 +7,7 @@ class Food:
 
         self.color = self.settings.food_color
 
-        occupied_positions = main.occupied_positions
-        self.position = self.generate_random_position(occupied_positions)
+        self.position = self.generate_random_position(main.occupied_positions)
 
     def draw(self):
         food_rect = pygame.Rect(self.settings.offset +self.position[0] * self.settings.cell_size, self.settings.offset + self.position[1] * self.settings.cell_size, self.settings.cell_size, self.settings.cell_size)
@@ -26,3 +25,6 @@ class Food:
             position = self.generate_random_cell()
         
         return position
+    
+    def relocate(self, occupied_positions):
+        self.position = self.generate_random_position(occupied_positions)

@@ -4,8 +4,7 @@ class TextInput:
     def __init__(self, main,
         position,
         label = "",
-        width = 220,
-        height = 40,
+        size = (220, 40),
         max_length = 12,
         allowed_chars = None,
         label_gap = 10,
@@ -24,7 +23,7 @@ class TextInput:
 
         self.hidden = hidden
 
-        # Input box rect (shifted right if label exists)
+        width, height = size
         self.rect = pygame.Rect(0, 0, width, height)
         self.rect.center = position
         if label:

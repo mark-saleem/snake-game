@@ -11,6 +11,7 @@ class Settings:
         self.number_of_cells = 25
         self.cell_size = 20
         self.offset = 50
+        self.panel_width = 100
 
         self.h1 = pygame.font.Font(None, 40)
         self.h2 = pygame.font.Font(None, 30)
@@ -18,14 +19,17 @@ class Settings:
         self.text = pygame.font.Font(None, 20)
 
 
-        self.screen_width = self.cell_size*self.number_of_cells + 2*self.offset
+        self.screen_width = self.cell_size*self.number_of_cells + 2*self.offset + self.panel_width
         self.screen_height = self.cell_size*self.number_of_cells + 2*self.offset
 
         self.background_color = (120, 190, 255)
         self.background_color_name = 'BLUE'
 
         self.border_color = (20, 30, 90)
+        self.snake_color = self.border_color
         self.food_color = (253, 21, 21)
+        self.rock_color = (82, 82, 82)
+        self.exit_color = (5, 102, 8)
 
         self.color1 = (250, 136, 60)
         self.color1_name = 'ORANGE'
@@ -41,6 +45,7 @@ class Settings:
         self.size = 'MEDIUM'
 
         self.button_color = (200, 200, 200)
+        self.button_on_color = (46, 111, 64)
 
         self.controls = 'WASD'
         self.binds = [pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d]

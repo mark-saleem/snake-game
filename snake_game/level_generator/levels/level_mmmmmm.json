@@ -1,0 +1,13 @@
+{
+  "name": "mmmmmm",
+  "grid_cells": 25,
+  "snake_start": [
+    6,
+    10
+  ],
+  "exit": [
+    20,
+    11
+  ],
+  "rocks": []
+}
