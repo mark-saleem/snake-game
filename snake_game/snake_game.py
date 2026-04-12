@@ -457,6 +457,7 @@ class SnakeGame:
 
     def start_level(self, level):
         self.set_state('RUNNING')
+        self.settings.set_game_size('LARGE')
         self.level_generator.load_level(level)
         self.snake = Snake(self, start_position=self.level_generator.snake_start)
         self.foods = []
