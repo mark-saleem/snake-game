@@ -56,9 +56,15 @@ class SnakeGame:
         self.signup_password_input = TextInput(self, position=(300, 350), label='Password:', hidden=True, allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()-_=+/?.>,<[]') #########################
         self.signup_button = Button(self, "Sign up", position=(300, 400))
         
+        ###########################
+        self.level_page = 0
+        ###########################
         self.level_buttons = [
-            Button(self, f"{level+1}", (125 + level * 40, 300), size =(30, 30)) for level in range(self.level_generator.get_number_of_levels())
+            Button(self, f"{level+1}", (125 + level * 40, 300), size =(30, 30)) for level in range(self.displaied_levels()[0], self.displaied_levels()[1])
         ]
+
+        self.level_arrow_left_button = Button(self, "<", position=(100, 350), size=(30, 30))
+        self.level_arrow_right_button = Button(self, ">", position=(500, 350), size=(30, 30))
 
         self.level_generator_button = Button(self, "Generate Level", position=(300, 350), size=(150, 30))
 
@@ -79,7 +85,6 @@ class SnakeGame:
             (self.place_exit_button, "EXIT"),
             (self.erase_button, "ERASE"),
         ]
-
 
         self.menu_button_actions = [
             (self.return_button,    lambda: self.set_state('STOPPED')),
@@ -120,8 +125,10 @@ class SnakeGame:
         self.levels_button_actions = [
             (self.return_button,    lambda: self.set_state('STOPPED')),
             (self.level_generator_button, lambda: self.set_state('LEVEL_GENERATOR')),
+            (self.level_arrow_left_button, lambda: self.load_previous_level_page()),
+            (self.level_arrow_right_button, lambda: self.load_next_level_page()),
         ] + [
-            (self.level_buttons[level], lambda level=level: self.start_level(level)) for level in range(self.level_generator.get_number_of_levels())
+            (self.level_buttons[level], lambda level=level: self.start_level(level)) for level in range(self.displaied_levels()[0], self.displaied_levels()[1])
         ]
 
         self.level_generator_actions = [
@@ -138,6 +145,8 @@ class SnakeGame:
         self.level_generator_input_fields = [
             self.level_name_input
         ]
+
+        self.level_page = 0
 
         self.state = 'LOGGINGIN'
         self.score = 0
@@ -156,6 +165,8 @@ class SnakeGame:
         self.score_font = self.settings.h2
         self.highscore_font = self.settings.h2
         self.game_settings_font = self.settings.h3
+
+        self.level_page_font = self.settings.h3
 
     def run_game(self):
         while True:
@@ -344,7 +355,12 @@ class SnakeGame:
             for level_button in self.level_buttons:
                 level_button.draw()
 
+            self.level_arrow_left_button.draw()
+            self.level_arrow_right_button.draw()
+
             self.level_generator_button.draw()
+
+            self.screen.blit(self.level_page_font.render(f"Page {self.level_page + 1}/{self.level_generator.get_number_of_levels() // 8 + 1}", True, self.title_color), (self.settings.offset + int((self.settings.cell_size*self.settings.number_of_cells)/2), self.settings.offset + self.settings.cell_size*self.settings.number_of_cells + 10))
 
         elif self.state == "LEVEL_GENERATOR":
             self.return_levels_button.draw()
@@ -469,12 +485,26 @@ class SnakeGame:
         self.set_level_buttons()
 
     def set_level_buttons(self):
+        print(self.displaied_levels())
         self.level_buttons = [
-            Button(self, f"{level+1}", (125 + level * 40, 300), size =(30, 30)) for level in range(self.level_generator.get_number_of_levels())
+            Button(self, f"{level+1}", (125 + (level % 8) * 40, 300), size =(30, 30)) for level in range(self.displaied_levels()[0], self.displaied_levels()[1])
         ]
         self.levels_button_actions = [
             (self.return_button,    lambda: self.set_state('STOPPED')),
             (self.level_generator_button, lambda: self.set_state('LEVEL_GENERATOR')),
+            (self.level_arrow_left_button, lambda: self.load_previous_level_page()),
+            (self.level_arrow_right_button, lambda: self.load_next_level_page()),
         ] + [
-            (self.level_buttons[level], lambda level=level: self.start_level(level)) for level in range(self.level_generator.get_number_of_levels())
+            (self.level_buttons[level], lambda level=level: self.start_level(level)) for level in range(self.displaied_levels()[0] % 8, self.displaied_levels()[1] % 8)
         ]
+
+    def load_previous_level_page(self):
+        self.level_page = max(0, self.level_page - 1)
+        self.set_level_buttons()
+
+    def load_next_level_page(self):
+        self.level_page = min(self.level_generator.get_number_of_levels() // 8, self.level_page + 1)
+        self.set_level_buttons()
+
+    def displaied_levels(self):
+        return self.level_page * 8, min((self.level_page + 1) * 8, self.level_generator.get_number_of_levels())
