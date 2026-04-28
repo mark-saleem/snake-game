@@ -485,7 +485,6 @@ class SnakeGame:
         self.set_level_buttons()
 
     def set_level_buttons(self):
-        print(self.displaied_levels())
         self.level_buttons = [
             Button(self, f"{level+1}", (125 + (level % 8) * 40, 300), size =(30, 30)) for level in range(self.displaied_levels()[0], self.displaied_levels()[1])
         ]
